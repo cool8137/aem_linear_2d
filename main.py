@@ -28,17 +28,17 @@ def make_spring_array(spr_comb_mat):
     Input: spring combination matrix.
     Output: an array of spring objects.
     
-    spr_comb_mat = [{spr_no} {ele_1} {ele_2} {edg_1} {edg_2} {d} {alpha_1} {alpha_2} {L}]
+    spr_comb_mat = [{spr_no} {ele_1} {ele_2} {edg_1} {edg_2} {d} {x_1} {y_1} {x_2} {y_2}]
     {spr_no} = spring no.
     {ele_1} = col. vector of first element no.
     {ele_2} = col. vector of second element no.
     {edg_1} = col. vector of first element's edge no.
     {edg_2} = col. vector of second element's edge no.
     {d} = thickness of spring
-    {alpha_1} = angle towards spring contact wrt element one's vertical
-    {alpha_2} = angle towards spring contact wrt element two's vertical
-    {L_1} = length from center of element one to the contact point
-    {L_2} = length from center of element two to the contact point
+    {x_1} = x coordinate of first point of spring
+    {y_1} = y coordinate of first point of spring
+    {x_2} = x coordinate of second point of spring
+    {y_2} = y coordinate of second point of spring
     """
     spring_array = []
     for i in range(len(spr_comb_mat)):
@@ -48,11 +48,11 @@ def make_spring_array(spr_comb_mat):
         edg_1 = spr_comb_mat[i,3]
         edg_2 = spr_comb_mat[i,4]
         d = spr_comb_mat[i,5]
-        alpha_1 = spr_comb_mat[i,6]
-        alpha_2 = spr_comb_mat[i,7]
-        L_1 = spr_comb_mat[i,8]
-        L_2 = spr_comb_mat[i,9]
-        curr_spring = aem.Spring(spr_no,ele_1,ele_2,edg_1,edg_2,d,alpha_1,alpha_2,L_1,L_2)
+        x_1 = spr_comb_mat[i,6]
+        y_1 = spr_comb_mat[i,7]
+        x_2 = spr_comb_mat[i,8]
+        y_2 = spr_comb_mat[i,9]
+        curr_spring = aem.Spring(spr_no,ele_1,ele_2,edg_1,edg_2,d,x_1,y_1,x_2,y_2)
         spring_array.append(curr_spring)
 
     return spring_array
@@ -84,45 +84,50 @@ def make_auto_spr_com_mat(ele_com_mat):
         edg_2 = ele_com_mat[i,3]
         n = ele_com_mat[i,4]
         
-        # calc base and height for element one
-        if (edg_1 == 1 or edg_1 == 3):
-            height_1 = ele_1.a  # length of base (edge perp to contact edge)
-            base_1 = ele_1.b    # length of contact edge
-            
-        elif (edg_1 == 2 or edg_1 == 4):
-            height_1 = ele_1.b
-            base_1 = ele_1.a
-            
-        else:
-            raise AemError('edg_1 at row '+str(i)+' of ele_com_mat is invalid.')
-
-        # calc base and height for element two
-        if (edg_2 == 1 or edg_2 == 3):
-            height_2 = ele_2.a  # length of base (edge perp to contact edge)
-            base_2 = ele_2.b    # length of contact edge
-            
-        elif (edg_2 == 2 or edg_2 == 4):
-            height_2 = ele_2.b
-            base_2 = ele_2.a
+        # check common edge of elements. if ele_2 has smaller edge than second ele will be ele_1
+        if (ele_com_mat[i,0].edg_len[ele_com_mat[i,2]] > ele_com_mat[i,1].edg_len[ele_com_mat[i,3]]):
+            ele_2 = ele_com_mat[i,0]
+            ele_1 = ele_com_mat[i,1]
+            edg_2 = ele_com_mat[i,2]
+            edg_1 = ele_com_mat[i,3]
+            n = ele_com_mat[i,4]        
             
         else:
-             raise AemError('edg_2 at row '+str(i)+' of ele_com_mat is invalid.')
+            ele_1 = ele_com_mat[i,0]
+            ele_2 = ele_com_mat[i,1]
+            edg_1 = ele_com_mat[i,2]
+            edg_2 = ele_com_mat[i,3]
+            n = ele_com_mat[i,4]
 
+        gov_height = ele_1.edg_len[edg_1] # it is the height of ele_1
+        
         # height of each spring
-        d = 1.0 * height_1 / n
+        d = 1.0 * gov_height / n
 
         # each edge will have n springs
         for j in range(n):
-            pos_from_top_1 = (1.0*d/2) + (j*d)  #position of spring from top of element
-            pos_from_top_2 = height_2 - pos_from_top_1 # postiton for ele 2 is compliment because ele two is mirro
+            pos_from_center_1 = gov_height/2. - ((1.0*d/2) + (j*d)) #second term is pos_from_top_1
+            
+            # Calc angle (beta) from horizontal to the line connecting 
+            # center of first element with the starting point of spring
+            beta =   {2:ele_1.r,\
+                     3:(ele_1.r+math.pi/2),\
+                     4:(ele_1.r+math.pi),\
+                     1:(ele_1.r+3.*math.pi/2.)}[edg_1]
+        
+            #Calc coordinate for first point of spring
+            x_1 = ele_1.x + pos_from_center_1 * math.cos(beta)
+            y_1 = ele_1.y + pos_from_center_1 * math.sin(beta)
 
-            alpha_1 = pos_atan(base_1/2,(height_1/2.-pos_from_top_1))
-            alpha_2 = pos_atan((base_2/2),(height_2/2.-pos_from_top_2)) # negative because ele two is a mirror to ele one
+            # Calc dis from first point of spring to second (ie length of spring)
+            spr_len = ele_1.edg_len[edg_1%2+1]/2. + ele_2.edg_len[edg_2%2+1]/2.
 
-            L_1 = (base_1/2.) / math.sin(alpha_1)
-            L_2 = (base_2/2.) / math.sin(alpha_2)
-
-            spr_com_mat = numpy.vstack([spr_com_mat, [spr_no,ele_1,ele_2,edg_1,edg_2,d,alpha_1,alpha_2,L_1,L_2]])
+            # Calc coordinate of second point of spring
+            x_2 = x_1 + spr_len * math.cos(beta-math.pi/2)
+            y_2 = y_1 + spr_len * math.sin(beta-math.pi/2)
+            
+            # Stack all info into the spr_com_mat matrix
+            spr_com_mat = numpy.vstack([spr_com_mat, [spr_no,ele_1,ele_2,edg_1,edg_2,d,x_1,y_1,x_2,y_2]])
             spr_no = spr_no + 1
 
     # delete first row that contains zeros only
@@ -174,11 +179,13 @@ def make_global_stiff_mat(ele_array,spr_array):
     
          
 #element = [aem.Element(0,4,5,2e9,2e9,0,0),\
-#aem.Element(1,4,5,2e9,2e8,0,5),
-#aem.Element(2,4,5,2e9,2e8,0,10)]
+#aem.Element(1,4,5,2e9,2e8,0,5),\
+#aem.Element(2,4,5,2e9,2e8,0,10),\
+#aem.Element(3,4,5,2e9,2e8,0,15)]
 #
 #ele_com_mat = numpy.array([[element[0],element[1],3,1,10],\
-#                            [element[1],element[2],3,1,10]])
+#                            [element[1],element[2],3,1,10],\
+#                            [element[2],element[3],3,1,10]])
 #
 #spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
 #
@@ -186,14 +193,15 @@ def make_global_stiff_mat(ele_array,spr_array):
 #
 #glob_mat = make_global_stiff_mat(element, spr_array)
 #
-#unknown_dis = [3,4,5,6,7,8]
-#loads = numpy.array([0,0,0,100,20,0]).T
-#K=glob_mat[[[3],[4],[5],[6],[7],[8]],[3,4,5,6,7,8]]
+#unknown_dis = numpy.array([range(3,12)])
+#loads = numpy.array([[0,0,0,0,0,0,1000,20,0]]).T
+#K=glob_mat[unknown_dis.T,unknown_dis]
 #
 ##dis = spsolve(K,loads)
 #dis = numpy.linalg.solve(K,loads)
 #
 #K
+
 
 element = [aem.Element(0, 0.2, 0.1, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000),\
            aem.Element(1, 0.2, 0.1, 2.07e9, 79.3e9, 1.000000e-001, 0.000000e+000),\
@@ -253,4 +261,3 @@ loads = numpy.hstack([numpy.zeros((1,(3*n-6))),[[1000,0,0]]]).T
 K=glob_mat[unknown_dis.T,unknown_dis]
 
 dis = numpy.linalg.solve(K,loads)
-
