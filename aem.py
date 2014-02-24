@@ -5,6 +5,7 @@ import numpy
 class Element:
     """Element class
     ele_no = element number
+    edg_len = edg length
     b = height of element (edge 2 and 4)
     a = length of element (edge 1 and 3)
     T = thickness of element
@@ -17,6 +18,7 @@ class Element:
     """
     def __init__(self,ele_no,b,a,E,G,x,y,r=0,T=1):
         self.ele_no = ele_no
+        self.edg_len = {1:a,2:b,3:a,4:b}
         self.b = b
         self.a = a
         self.E = E
