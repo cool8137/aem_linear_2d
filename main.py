@@ -1,6 +1,10 @@
 import math
 import numpy
 import aem
+from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import spsolve
+from scipy.sparse import csc_matrix
+
 
 class AemError():
     def __init__(self,value):
@@ -126,14 +130,67 @@ def make_auto_spr_com_mat(ele_com_mat):
     return spr_com_mat
 
 
-def make_global_stiff_mat(spr_array):
-    pass
+def make_global_stiff_mat(ele_array,spr_array):
+    """
+    numering: 
+    0 = element one horizontal
+    1 = element one vertical
+    2 = element one rotation
+    3 = element two horizontal
+    4 = element two vertical
+    5 = element two rotation
+    6 = element three horizaontal
+    ...
+    12 = three element one horizaontal
+    ...
+    """
+    N = len(ele_array)
+    #global_mat = lil_matrix((3*N,3*N))
+    global_mat = numpy.zeros((3*N,3*N))
+
+    for i in range(len(spr_array)):
+        spr = spr_array[i]
+
+        spr_mat = spr.stiffness_matrix()
+        #print spr_mat.shape
+        
+        ele_i = spr.ele_1.ele_no
+        ele_j = spr.ele_2.ele_no
+        
+        # Location vector
+        lv = [(ele_i*3), (ele_i*3+1), (ele_i*3+2),\
+                        (ele_j*3), (ele_j*3+1), (ele_j*3+2)]
+        
+        global_mat[ [ [lv[0]], [lv[1]], [lv[2]],\
+            [lv[3]], [lv[4]], [lv[5]] ], lv ]\
+            = spr_mat
+
+        # Note while extracting array from array
+        # A[[[r1],[r2],[r3]],[c1,c2,c3,c4]]
+    
+    return global_mat
+        
+    
     
          
-element = [aem.Element(1,4,5,2e9,2e9,0,0),aem.Element(2,4,5,2e9,2e9,5,0)]
+element = [aem.Element(0,4,5,2e9,2e9,0,0),\
+aem.Element(1,4,5,2e9,2e8,0,5),
+aem.Element(2,4,5,2e9,2e8,0,10)]
 
-ele_com_mat = numpy.matrix([[element[0],element[1],2,4,5]])
+ele_com_mat = numpy.array([[element[0],element[1],3,1,10],\
+                            [element[1],element[2],3,1,10]])
 
 spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
 
 spr_array = make_spring_array(spr_com_mat)
+
+glob_mat = make_global_stiff_mat(element, spr_array)
+
+unknown_dis = [3,4,5,6,7,8]
+loads = numpy.array([0,0,0,100,20,0]).T
+K=glob_mat[[[3],[4],[5],[6],[7],[8]],[3,4,5,6,7,8]]
+
+#dis = spsolve(K,loads)
+dis = numpy.linalg.solve(K,loads)
+
+K
