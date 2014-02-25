@@ -113,7 +113,7 @@ def make_auto_spr_com_mat(ele_com_mat):
             beta =   {2:ele_1.r,\
                      3:(ele_1.r+math.pi/2),\
                      4:(ele_1.r+math.pi),\
-                     1:(ele_1.r+3.*math.pi/2.)}[edg_1]
+                     1:(ele_1.r+3.*math.pi/2.)}[edg_1] + math.pi/2
         
             #Calc coordinate for first point of spring
             x_1 = ele_1.x + pos_from_center_1 * math.cos(beta)
@@ -163,12 +163,10 @@ def make_global_stiff_mat(ele_array,spr_array):
         ele_j = spr.ele_2.ele_no
         
         # Location vector
-        lv = [(ele_i*3), (ele_i*3+1), (ele_i*3+2),\
-                        (ele_j*3), (ele_j*3+1), (ele_j*3+2)]
+        lv = numpy.array([[(ele_i*3), (ele_i*3+1), (ele_i*3+2),\
+                        (ele_j*3), (ele_j*3+1), (ele_j*3+2)]])
         
-        global_mat[ [ [lv[0]], [lv[1]], [lv[2]],\
-            [lv[3]], [lv[4]], [lv[5]] ], lv ]\
-            = spr_mat
+        global_mat[lv.T,lv] = global_mat[lv.T,lv] + spr_mat
 
         # Note while extracting array from array
         # A[[[r1],[r2],[r3]],[c1,c2,c3,c4]]
@@ -178,29 +176,29 @@ def make_global_stiff_mat(ele_array,spr_array):
     
     
          
-#element = [aem.Element(0,4,5,2e9,2e9,0,0),\
-#aem.Element(1,4,5,2e9,2e8,0,5),\
-#aem.Element(2,4,5,2e9,2e8,0,10),\
-#aem.Element(3,4,5,2e9,2e8,0,15)]
-#
-#ele_com_mat = numpy.array([[element[0],element[1],3,1,10],\
-#                            [element[1],element[2],3,1,10],\
-#                            [element[2],element[3],3,1,10]])
-#
-#spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
-#
-#spr_array = make_spring_array(spr_com_mat)
-#
-#glob_mat = make_global_stiff_mat(element, spr_array)
-#
-#unknown_dis = numpy.array([range(3,12)])
-#loads = numpy.array([[0,0,0,0,0,0,1000,20,0]]).T
-#K=glob_mat[unknown_dis.T,unknown_dis]
-#
-##dis = spsolve(K,loads)
-#dis = numpy.linalg.solve(K,loads)
-#
-#K
+element = [aem.Element(0,4,5,2e9,2e9,0,0),\
+aem.Element(1,4,5,2e9,2e8,0,5),\
+aem.Element(2,4,5,2e9,2e8,0,10),\
+aem.Element(3,4,5,2e9,2e8,0,15)]
+
+ele_com_mat = numpy.array([[element[0],element[1],3,1,10],\
+                            [element[1],element[2],3,1,10],\
+                            [element[2],element[3],3,1,10]])
+
+spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
+
+spr_array = make_spring_array(spr_com_mat)
+
+glob_mat = make_global_stiff_mat(element, spr_array)
+
+unknown_dis = numpy.array([range(3,12)])
+loads = numpy.array([[0,0,0,0,0,0,1000,20,0]]).T
+K=glob_mat[unknown_dis.T,unknown_dis]
+
+#dis = spsolve(K,loads)
+dis = numpy.linalg.solve(K,loads)
+
+K
 
 
 element = [aem.Element(0, 0.2, 0.1, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000),\
@@ -225,26 +223,26 @@ element = [aem.Element(0, 0.2, 0.1, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000
            aem.Element(19, 0.2, 0.1, 2.07e9, 79.3e9, 1.900000e+000, 0.000000e+000),\
            aem.Element(20, 0.2, 0.1, 2.07e9, 79.3e9, 2.00000e+000, 0.000000e+000)]
            
-ele_com_mat = numpy.array([[element[0],element[1],2,4,20],\
-                           [element[1],element[2],2,4,20],\
-                           [element[2],element[3],2,4,20],\
-                           [element[3],element[4],2,4,20],\
-                           [element[4],element[5],2,4,20],\
-                           [element[5],element[6],2,4,20],\
-                           [element[6],element[7],2,4,20],\
-                           [element[7],element[8],2,4,20],\
-                           [element[8],element[9],2,4,20],\
-                           [element[9],element[10],2,4,20],\
-                           [element[10],element[11],2,4,20],\
-                           [element[11],element[12],2,4,20],\
-                           [element[12],element[13],2,4,20],\
-                           [element[13],element[14],2,4,20],\
-                           [element[14],element[15],2,4,20],\
-                           [element[15],element[16],2,4,20],\
-                           [element[16],element[17],2,4,20],\
-                           [element[17],element[18],2,4,20],\
-                           [element[18],element[19],2,4,20],\
-                           [element[19],element[20],2,4,20]])
+ele_com_mat = numpy.array([[element[0],element[1],2,4,2],\
+                           [element[1],element[2],2,4,2],\
+                           [element[2],element[3],2,4,2],\
+                           [element[3],element[4],2,4,2],\
+                           [element[4],element[5],2,4,2],\
+                           [element[5],element[6],2,4,2],\
+                           [element[6],element[7],2,4,2],\
+                           [element[7],element[8],2,4,2],\
+                           [element[8],element[9],2,4,2],\
+                           [element[9],element[10],2,4,2],\
+                           [element[10],element[11],2,4,2],\
+                           [element[11],element[12],2,4,2],\
+                           [element[12],element[13],2,4,2],\
+                           [element[13],element[14],2,4,2],\
+                           [element[14],element[15],2,4,2],\
+                           [element[15],element[16],2,4,2],\
+                           [element[16],element[17],2,4,2],\
+                           [element[17],element[18],2,4,2],\
+                           [element[18],element[19],2,4,2],\
+                           [element[19],element[20],2,4,2]])
 
 spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
 
@@ -256,8 +254,30 @@ n = len(element)
 
 unknown_dis = numpy.array([range(3,(3*n))])
 
-loads = numpy.hstack([numpy.zeros((1,(3*n-6))),[[1000,0,0]]]).T
+loads = numpy.hstack([numpy.zeros((1,(3*n-6))),[[0,-1000,0]]]).T
 
 K=glob_mat[unknown_dis.T,unknown_dis]
 
 dis = numpy.linalg.solve(K,loads)
+
+#####
+
+element2 = [aem.Element(0, 0.2, 0.2, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000),\
+           aem.Element(1, 0.2, 0.2, 2.07e9, 79.3e9, 2.000000e-001, 0.000000e+000)]
+ele_com_mat2 = numpy.array([[element2[0],element2[1],2,4,20]])
+
+spr_com_mat2 = make_auto_spr_com_mat(ele_com_mat2)
+
+spr_array2 = make_spring_array(spr_com_mat2)
+
+glob_mat2 = make_global_stiff_mat(element2, spr_array2)
+
+n2 = len(element2)
+
+unknown_dis2 = numpy.array([[3,4,5]])
+
+loads2 = numpy.array([[1000,0,0]]).T
+
+K2=glob_mat2[unknown_dis2.T,unknown_dis2]
+
+dis2 = numpy.linalg.solve(K2,loads2)

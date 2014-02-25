@@ -77,20 +77,28 @@ class Spring:
         """
         Returns spring stiffness matrix (6X6)
         """
-        mat = numpy.matrix(numpy.zeros((6,6)))
+
+        print "self.x_1 = ",self.x_1
+        print "self.y_1 = ",self.y_1
+        print "self.x_2 = ",self.x_2
+        print "self.y_2 = ",self.y_2
+        print "self.ele_1.x = ",self.ele_1.x
+        print "self.ele_1.y = ",self.ele_1.y
+        print "self.ele_2.x = ",self.ele_2.x
+        print "self.ele_2.y = ",self.ele_2.y        
         
         L = math.sqrt((self.x_2 - self.x_1)**2 + (self.y_2 - self.y_1)**2)
         l = (self.x_2 - self.x_1)/L
         m = (self.y_2 - self.y_1)/L
         
         # Distance from center of ele_1 to first point of spring (d11)
-        dx11 = (self.x_1 - self.ele_1.x)
-        dy11 = (self.y_1 - self.ele_1.y)
+        dx11 = -(self.x_1 - self.ele_1.x)
+        dy11 = -(self.y_1 - self.ele_1.y)
         d11 = math.sqrt(dx11**2 + dy11**2)
         
         # Distance from center of ele_2 to second point of spring (d22)
-        dx22 = (self.x_2 - self.ele_2.x)
-        dy22 = (self.y_2 - self.ele_2.y)
+        dx22 = -(self.x_2 - self.ele_2.x)
+        dy22 = -(self.y_2 - self.ele_2.y)
         d22 = math.sqrt(dx22**2 + dy22**2)
         
         # Perp. distance from center of ele_1 to the common edge (d1e)
@@ -99,127 +107,45 @@ class Spring:
         # Perp. distance from center of ele_2 to the common edge (d2e)
         d2e = self.ele_2.edg_len[self.edg_2%2 + 1]/2
 
-        # top left (3X3)
-        # unit horizontal disp on ele 1
-        mat[0,0] = (self.K_n * l * l) + (self.K_s * m * m) # horizontal reaction at ele 1
-        mat[0,1] = (self.K_n * l * m) - (self.K_s * m * l) # vertical reaction at ele 1
-        mat[0,2] = (-self.K_n * l * l * dy11 - self.K_n * l * m * dx11) - (self.K_s * m * d1e) # moment reaction at ele 1
-        # unit vertical disp on ele 1
-        mat[1,0] = mat[0,1] # hor reaction at ele 1
-        mat[1,1] = (self.K_n * m * m) + (self.K_s * l * l) # ver reaction at ele 1
-        mat[1,2] = (-self.K_n * m * l * dy11 - self.K_n * m * m * dx11) + (self.K_s * l * d1e) # moment reaction at ele 1
-        # unit rotation on ele 1
-        mat[2,0] = mat[0,2] # hor reaction at ele 1
-        mat[2,1] = mat[1,2] # ver reaction at ele 1
-        mat[2,2] = (self.K_n * d11 * d11) + (self.K_s * d1e * d1e) # moment reaction at ele 1
+        K_n = self.K_n
+        K_s = self.K_s
+        
+        print "m = ",m
+        print "l = ",l
+        print "dx11 = ",dx11
+        print "dx22 = ",dx22
+        print "dy11 = ",dy11
+        print "dy22 = ",dy22
+        
+        d11 = (m*dx11 - l*dy11)
+        d22 = (m*dx22 - l*dy22)
+        print d11
+        print d22
 
-        # top right (3X3)
-        # unit hor disp on ele 1
-        mat[0,3] = -((self.K_n * l * l) + (self.K_s * m * m)) # hor reaction at ele 2
-        mat[0,4] = -((self.K_n * l * m) - (self.K_s * m * l)) # ver reaction at ele 2
-        mat[0,5] = -((-self.K_n * l * l * dy22 - self.K_n * l * m * dx22) + (self.K_s * m * d2e)) #1 rotation reaction on ele_2
-        # unit ver disp on ele 1
-        mat[1,3] = mat[0,4] # hor reaction at ele 2
-        mat[1,4] = -((self.K_n * m * m) + (self.K_s * l * l)) # ver reaction at ele 2
-        mat[1,5] = -((-self.K_n * m * l * dy22 - self.K_n * m * m * dx22) - (self.K_s * l * d2e)) #2 rotation reaction on ele_2
-        # unit rotation on ele 1
-        mat[2,3] = -((-self.K_n * l * l * dy11 - self.K_n * l * m * dx11) - (self.K_s * m * d1e)) #1 rotation on ele_1 causing  horizontal reaction at two
-        mat[2,4] = -((-self.K_n * m * l * dy11 - self.K_n * m * m * dx11) + (self.K_s * l * d1e)) #2 rotation on ele_1 causing vertical reaction at two
-        mat[2,5] = -((self.K_n * d11 * d22) - (self.K_s * d1e * d2e)) # roation on ele_1 casing reation on ele_2
+        L = numpy.array([[l, m, 0, 0, 0, 0],\
+                          [-m, l, 0, 0, 0, 0],\
+                          [0, 0, 1, 0, 0, 0],\
+                          [0, 0, 0, l, m, 0],\
+                          [0, 0, 0, -m, l, 0],\
+                          [0, 0, 0, 0, 0, 1]])
+        #L = numpy.array([[l, m, 0, 0, 0, -m/d1e],\
+        #                  [-m, l, 0, 0, 0, l/d1e],\
+        #                  [0, 0, 1, 0, 0, -d2e/d1e],\
+        #                  [0, 0, 0, l, m, 0],\
+        #                  [0, 0, 0, -m, l, 0],\
+        #                  [m/d2e, -l/d2e, -d1e/d2e, 0, 0, 1]])
 
-        # bottom left (3X3)
-        mat[3,0] = mat[0,3]
-        mat[3,1] = mat[1,3]
-        mat[3,2] = mat[2,3]
-        mat[4,0] = mat[0,4]
-        mat[4,1] = mat[1,4]
-        mat[4,2] = mat[2,4]
-        mat[5,0] = mat[0,5]
-        mat[5,1] = mat[1,5]
-        mat[5,2] = mat[2,5]
+        k = numpy.array([[K_n, 0, -K_n*d11, -K_n, 0, K_n*d22],\
+                          [0, K_s, K_s*d1e, 0, -K_s, K_s*d2e],\
+                          [-K_n*d11, K_s*d1e, K_n*(d11)**2+K_s*(d1e)**2, K_n*d11, -K_s*d1e, -K_n*d11*d22+K_s*d1e*d2e],\
+                          [-K_n, 0, K_n*d11, K_n, 0, -K_n*d22],\
+                          [0, -K_s, -K_s*d1e, 0, K_s, -K_s*d2e],\
+                          [K_n*d22, K_s*d2e, -K_n*d11*d22+K_s*d1e*d2e, -K_n*d22, -K_s*d2e, K_n*(d22)**2+K_s*(d2e)**2]])
+             
 
-        # bottom right (3X3)
-        mat[3,3] = mat[0,0]
-        mat[3,4] = mat[0,1]
-        mat[3,5] = (-self.K_n * l * l * dy22 - self.K_n * l * m * dx22) - (self.K_s * m * d2e)
-        mat[4,3] = mat[1,0]
-        mat[4,4] = mat[1,1]
-        mat[4,5] = (-self.K_n * m * l * dy22 - self.K_n * m * m * dx22) + (self.K_s * l * d2e)
-        mat[5,3] = mat[3,5]
-        mat[5,4] = mat[4,5]
-        mat[5,5] = (self.K_n * d22 * d22) + (self.K_s * d2e * d2e)
+        K = numpy.dot(L.T,numpy.dot(k,L))
 
-##################################
-
-#        # top left (3X3)
-#        mat[0,0] = (self.K_n * math.sin(angle_sum)**2)\
-#                    + (self.K_s * math.cos(angle_sum)**2)
-#        mat[0,1] = (-self.K_n * math.sin(angle_sum) * math.cos(angle_sum))\
-#                    + (self.K_s * math.sin(angle_sum) * math.cos(angle_sum))
-#        mat[0,2] = (-self.K_n * self.L_1 * math.sin(angle_sum) * math.cos(self.alpha_1))\
-#                    + (self.K_s * self.L_1 * math.cos(angle_sum) * math.sin(self.alpha_1))
-#        mat[1,0] = mat[0,1]
-#        mat[1,1] = (self.K_n * math.cos(angle_sum)**2) \
-#                    + (self.K_s * math.sin(angle_sum)**2)
-#        mat[1,2] = (self.K_n * self.L_1 * math.cos(angle_sum) * math.cos(self.alpha_1))\
-#                    + (self.K_s * self.L_1 * math.sin(angle_sum) * math.sin(self.alpha_1))
-#        mat[2,0] = mat[0,2]
-#        mat[2,1] = mat[1,2]
-#        mat[2,2] = (self.K_n * self.L_1**2 * math.cos(self.alpha_1)**2)\
-#                    + (self.K_s * self.L_1**2 * math.sin(self.alpha_1)**2)
-#
-#        # top right (3X3)
-#        mat[0,3] = -(self.K_n * math.sin(angle_sum)**2)\
-#                    - (self.K_s * math.cos(angle_sum)**2)
-#        mat[0,4] = -(-self.K_n * math.sin(angle_sum) * math.cos(angle_sum))\
-#                    + -(self.K_s * math.sin(angle_sum) * math.cos(angle_sum))
-#        mat[0,5] = -(-self.K_n * self.L_2 * math.sin(angle_sum) * math.cos(self.alpha_2))\
-#                    + -(self.K_s * self.L_2 * math.cos(angle_sum) * math.sin(self.alpha_2))
-#        mat[1,3] = mat[0,4]
-#        mat[1,4] = -(self.K_n * math.cos(angle_sum)**2) \
-#                    + -(self.K_s * math.sin(angle_sum)**2)
-#        mat[1,5] = -(self.K_n * self.L_2 * math.cos(angle_sum) * math.cos(self.alpha_1))\
-#                    + -(self.K_s * self.L_2 * math.sin(angle_sum) * math.sin(self.alpha_1))
-#        mat[2,3] = mat[0,5]
-#        mat[2,4] = mat[1,5]
-#        mat[2,5] = -(self.K_n * self.L_2**2 * math.cos(self.alpha_2)**2)\
-#                    + -(self.K_s * self.L_2**2 * math.sin(self.alpha_2)**2)
-#
-#        # bottom left (3X3)
-#        mat[3,0] = -(self.K_n * math.sin(angle_sum)**2)\
-#                    - (self.K_s * math.cos(angle_sum)**2)
-#        mat[3,1] = -(-self.K_n * math.sin(angle_sum) * math.cos(angle_sum))\
-#                    + -(self.K_s * math.sin(angle_sum) * math.cos(angle_sum))
-#        mat[3,2] = -(-self.K_n * self.L_2 * math.sin(angle_sum) * math.cos(self.alpha_2))\
-#                    + -(self.K_s * self.L_2 * math.cos(angle_sum) * math.sin(self.alpha_2))
-#        mat[4,0] = mat[0,4]
-#        mat[4,1] = -(self.K_n * math.cos(angle_sum)**2) \
-#                    + -(self.K_s * math.sin(angle_sum)**2)
-#        mat[4,2] = -(self.K_n * self.L_2 * math.cos(angle_sum) * math.cos(self.alpha_1))\
-#                    + -(self.K_s * self.L_2 * math.sin(angle_sum) * math.sin(self.alpha_1))
-#        mat[5,0] = mat[0,5]
-#        mat[5,1] = mat[1,5]
-#        mat[5,2] = -(self.K_n * self.L_2**2 * math.cos(self.alpha_2)**2)\
-#                    + -(self.K_s * self.L_2**2 * math.sin(self.alpha_2)**2)
-#
-#        # bottom right (3X3)
-#        mat[3,3] = (self.K_n * math.sin(angle_sum)**2)\
-#                    + (self.K_s * math.cos(angle_sum)**2)
-#        mat[3,4] = (-self.K_n * math.sin(angle_sum) * math.cos(angle_sum))\
-#                    + (self.K_s * math.sin(angle_sum) * math.cos(angle_sum))
-#        mat[3,5] = (-self.K_n * self.L_1 * math.sin(angle_sum) * math.cos(self.alpha_1))\
-#                    + (self.K_s * self.L_1 * math.cos(angle_sum) * math.sin(self.alpha_1))
-#        mat[4,3] = mat[0,1]
-#        mat[4,4] = (self.K_n * math.cos(angle_sum)**2) \
-#                    + (self.K_s * math.sin(angle_sum)**2)
-#        mat[4,5] = (self.K_n * self.L_1 * math.cos(angle_sum) * math.cos(self.alpha_1))\
-#                    + (self.K_s * self.L_1 * math.sin(angle_sum) * math.sin(self.alpha_1))
-#        mat[5,3] = mat[0,2]
-#        mat[5,4] = mat[1,2]
-#        mat[5,5] = (self.K_n * self.L_1**2 * math.cos(self.alpha_1)**2)\
-#                    + (self.K_s * self.L_1**2 * math.sin(self.alpha_1)**2)
-
-        return mat
+        return K
 
         
 print "aem classes imported"
