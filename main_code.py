@@ -84,20 +84,20 @@ def make_auto_spr_com_mat(ele_com_mat):
         edg_2 = ele_com_mat[i,3]
         n = ele_com_mat[i,4]
         
-        ## check common edge of elements. if ele_2 has smaller edge than second ele will be ele_1
-        #if (ele_com_mat[i,0].edg_len[ele_com_mat[i,2]] > ele_com_mat[i,1].edg_len[ele_com_mat[i,3]]):
-        #    ele_2 = ele_com_mat[i,0]
-        #    ele_1 = ele_com_mat[i,1]
-        #    edg_2 = ele_com_mat[i,2]
-        #    edg_1 = ele_com_mat[i,3]
-        #    n = ele_com_mat[i,4]        
-        #    
-        #else:
-        #    ele_1 = ele_com_mat[i,0]
-        #    ele_2 = ele_com_mat[i,1]
-        #    edg_1 = ele_com_mat[i,2]
-        #    edg_2 = ele_com_mat[i,3]
-        #    n = ele_com_mat[i,4]
+        # check common edge of elements. if ele_2 has smaller edge than second ele will be ele_1
+        if (ele_com_mat[i,0].edg_len[ele_com_mat[i,2]] > ele_com_mat[i,1].edg_len[ele_com_mat[i,3]]):
+            ele_2 = ele_com_mat[i,0]
+            ele_1 = ele_com_mat[i,1]
+            edg_2 = ele_com_mat[i,2]
+            edg_1 = ele_com_mat[i,3]
+            n = ele_com_mat[i,4]        
+            
+        else:
+            ele_1 = ele_com_mat[i,0]
+            ele_2 = ele_com_mat[i,1]
+            edg_1 = ele_com_mat[i,2]
+            edg_2 = ele_com_mat[i,3]
+            n = ele_com_mat[i,4]
 
         gov_height = ele_1.edg_len[edg_1] # it is the height of ele_1
         
@@ -342,7 +342,7 @@ loads = numpy.hstack([numpy.zeros((1,(3*n-3))),[[0,-1000,0]]]).T
 
 K=glob_mat
 
-dis43 = numpy.linalg.solve(K,loads)
+dis = numpy.linalg.solve(K,loads)
 
 #####
 
@@ -413,26 +413,26 @@ element = [aem.Element(0, 0.2, 0.1, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000
            aem.Element(19, 0.2, 0.1, 2.07e9, 79.3e9, 1.900000e+000, 0.000000e+000),\
            aem.Element(20, 0.2, 0.1, 2.07e9, 79.3e9, 2.00000e+000, 0.000000e+000)]
            
-ele_com_mat = numpy.array([[element[0],element[1],2,4,80],\
-                           [element[1],element[2],2,4,80],\
-                           [element[2],element[3],2,4,80],\
-                           [element[3],element[4],2,4,80],\
-                           [element[4],element[5],2,4,80],\
-                           [element[5],element[6],2,4,80],\
-                           [element[6],element[7],2,4,80],\
-                           [element[7],element[8],2,4,80],\
-                           [element[8],element[9],2,4,80],\
-                           [element[9],element[10],2,4,80],\
-                           [element[10],element[11],2,4,80],\
-                           [element[11],element[12],2,4,80],\
-                           [element[12],element[13],2,4,80],\
-                           [element[13],element[14],2,4,80],\
-                           [element[14],element[15],2,4,80],\
-                           [element[15],element[16],2,4,80],\
-                           [element[16],element[17],2,4,80],\
-                           [element[17],element[18],2,4,80],\
-                           [element[18],element[19],2,4,80],\
-                           [element[19],element[20],2,4,80]])
+ele_com_mat = numpy.array([[element[0],element[1],2,4,20],\
+                           [element[1],element[2],2,4,20],\
+                           [element[2],element[3],2,4,20],\
+                           [element[3],element[4],2,4,20],\
+                           [element[4],element[5],2,4,20],\
+                           [element[5],element[6],2,4,20],\
+                           [element[6],element[7],2,4,20],\
+                           [element[7],element[8],2,4,20],\
+                           [element[8],element[9],2,4,20],\
+                           [element[9],element[10],2,4,20],\
+                           [element[10],element[11],2,4,20],\
+                           [element[11],element[12],2,4,20],\
+                           [element[12],element[13],2,4,20],\
+                           [element[13],element[14],2,4,20],\
+                           [element[14],element[15],2,4,20],\
+                           [element[15],element[16],2,4,20],\
+                           [element[16],element[17],2,4,20],\
+                           [element[17],element[18],2,4,20],\
+                           [element[18],element[19],2,4,20],\
+                           [element[19],element[20],2,4,20]])
 
 spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
 
@@ -450,70 +450,3 @@ K=glob_mat[unknown_dis.T,unknown_dis]
 
 dis = numpy.linalg.solve(K,loads)
 
-#if __name__ == '__main__':
-#    main()
-
-element = [aem.Element(3, 0.2, 0.2, 2.07e9, 79.3e9, 0.000000e+000, 0.000000e+000),\
-           aem.Element(6, 0.2, 0.2, 2.07e9, 79.3e9, 2.000000e-001, 0.000000e+000),\
-           aem.Element(0, 0.2, 0.2, 2.07e9, 79.3e9, 4.000000e-001, 0.000000e+000),\
-           aem.Element(5, 0.2, 0.2, 2.07e9, 79.3e9, 6.000000e-001, 0.000000e+000),\
-           aem.Element(9, 0.2, 0.2, 2.07e9, 79.3e9, 8.000000e-001, 0.000000e+000),\
-           aem.Element(8, 0.2, 0.2, 2.07e9, 79.3e9, 1.000000e+000, 0.000000e+000),\
-           aem.Element(2, 0.2, 0.2, 2.07e9, 79.3e9, 1.200000e+000, 0.000000e+000),\
-           aem.Element(1, 0.2, 0.2, 2.07e9, 79.3e9, 1.400000e+000, 0.000000e+000),\
-           aem.Element(10, 0.2, 0.2, 2.07e9, 79.3e9, 1.600000e+000, 0.000000e+000),\
-           aem.Element(4, 0.2, 0.2, 2.07e9, 79.3e9, 1.800000e+000, 0.000000e+000),\
-           aem.Element(7, 0.2, 0.2, 2.07e9, 79.3e9, 2.00000e+000, 0.000000e+000)]
-           
-ele_com_mat = numpy.array([[element[3],element[6],2,4,80],\
-                           [element[6],element[0],2,4,80],\
-                           [element[0],element[5],2,4,80],\
-                           [element[5],element[9],2,4,80],\
-                           [element[9],element[8],2,4,80],\
-                           [element[8],element[2],2,4,80],\
-                           [element[2],element[1],2,4,80],\
-                           [element[1],element[10],2,4,80],\
-                           [element[10],element[4],2,4,80],\
-                           [element[4],element[7],2,4,80]])
-
-spr_com_mat = make_auto_spr_com_mat(ele_com_mat)
-
-spr_array = make_spring_array(spr_com_mat)
-
-glob_mat = make_global_stiff_mat(element, spr_array)
-
-n = len(element)
-
-unknown_dis = numpy.array([range(3,(3*n))])
-
-loads = numpy.hstack([numpy.zeros((1,(3*n-6))),[[0,-1000,0]]]).T
-
-# Boundary Condision
-fixed_ele = [3]
-fixed_dis = []
-for x in fixed_ele:
-    fixed_dis.append(3*x)
-    fixed_dis.append(3*x+1)
-    fixed_dis.append(3*x+2)
-
-all_dis = range((3*n))
-
-unknown_dis_list = []
-for x in all_dis:
-    if not(x in fixed_dis):
-        unknown_dis_list.append(x)
-
-loads = numpy.zeros((len(unknown_dis_list),1))
-load_ele = [7]
-for i in load_ele:
-    loads[i*3+1,0] = -1000
-
-K=glob_mat[unknown_dis.T,unknown_dis]
-
-dis = numpy.linalg.solve(K,loads)
-
-for i in load_ele:
-    print dis[i*3+1,0]
-
-#if __name__ == '__main__':
-#    main()

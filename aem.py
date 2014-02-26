@@ -16,7 +16,7 @@ class Element:
     r = rotation angle in radian of element
     [note: when r is zero, edg no. 2 is towards the positive x axis]
     """
-    def __init__(self,ele_no,b,a,E,G,x,y,r=0,T=0.15):
+    def __init__(self,ele_no,b,a,E,G,x,y,node_1=None,node_2=None,node_3=None,node_4=None,r=0,T=0.15):
         self.ele_no = ele_no
         self.edg_len = {1:a,2:b,3:a,4:b,5:a,6:b}
         self.E = E
@@ -25,6 +25,10 @@ class Element:
         self.x = x
         self.y = y
         self.r = r
+        self.node_1 = node_1
+        self.node_2 = node_2
+        self.node_3 = node_3
+        self.node_4 = node_4
         
 
 class Spring:
@@ -71,6 +75,8 @@ class Spring:
         self.y_1 = y_1        
         self.x_2 = x_2
         self.y_2 = y_2        
+
+        
 
 
     def stiffness_matrix(self):
@@ -147,5 +153,107 @@ class Spring:
 
         return K
 
+class BCspring:
+    """BCspring class: spring connecting to the boundary condition
+    ele_1 = element one
+    edg_1 = edge no. of element one
+    BC = 1 or 2 or 3 
+        where     1: only normal ristriction on the edge
+                  2: only tangential ristriction on the edge
+                  3: both normal and tangential ristriction on the edge  
+    d = height of spring
+    T = thickness of spring
+    K_n = Normal spring constant
+    K_s = Shear spring constant
+    x_1 = x coordinate of first point of spring
+    y_1 = y coordinate of first point of spring
+    x_2 = x coordinate of center of edge of the BC
+    y_2 = y coordinate of center of edge of the BC
+    """
+
+    def __init__(self,spr_no, ele_1,edg_1,BC,d,x_1,y_1,x_2,y_2):
+        self.spr_no = spr_no
         
+        self.ele_1 = ele_1
+        self.edg_1 = edg_1
+
+        self.BC = BC
+
+        self.d = d
+        T = ele_1.T
+        self.T = T
+
+        K_n_1 = 1.0*(ele_1.E * d * T)/(self.ele_1.edg_len[edg_1+1]/2.)
+        K_n = K_n_1
+        self.K_n = K_n
+        
+        K_s_1 = 1.0*(ele_1.G * d * T)/(self.ele_1.edg_len[edg_1+1]/2.)
+        K_s = K_s_1
+        self.K_s = K_s
+
+        self.x_1 = x_1
+        self.y_1 = y_1
+        
+        self.x_2 = x_2
+        self.y_2 = y_2
+
+    def stiffness_matrix(self):
+        """
+        Returns spring stiffness matrix (6X6)
+        """
+
+        print "self.x_1 = ",self.x_1
+        print "self.y_1 = ",self.y_1
+        print "self.x_2 = ",self.x_2
+        print "self.y_2 = ",self.y_2
+        print "self.ele_1.x = ",self.ele_1.x
+        print "self.ele_1.y = ",self.ele_1.y
+             
+        
+        L = math.sqrt((self.x_2 - self.x_1)**2 + (self.y_2 - self.y_1)**2)
+        l = (self.x_2 - self.x_1)/L
+        m = (self.y_2 - self.y_1)/L
+        
+        # Distance from center of ele_1 to first point of spring (d11)
+        dx11 = -(self.x_1 - self.ele_1.x)
+        dy11 = -(self.y_1 - self.ele_1.y)
+        d11 = math.sqrt(dx11**2 + dy11**2)
+        
+        # Perp. distance from center of ele_1 to the common edge (d1e)
+        d1e = self.ele_1.edg_len[self.edg_1 + 1]/2 # using mod 2 +1 to get the base length
+
+        K_n = self.K_n
+        K_s = self.K_s
+        
+        print "m = ",m
+        print "l = ",l
+        print "dx11 = ",dx11
+        print "dy11 = ",dy11
+        
+        d11 = (m*dx11 - l*dy11)
+        print d11
+
+        L = numpy.array([[l, m, 0],\
+                          [-m, l, 0],\
+                          [0, 0, 1]])
+
+        #L = numpy.array([[l, m, 0, 0, 0, -m/d1e],\
+        #                  [-m, l, 0, 0, 0, l/d1e],\
+        #                  [0, 0, 1, 0, 0, -d2e/d1e],\
+        #                  [0, 0, 0, l, m, 0],\
+        #                  [0, 0, 0, -m, l, 0],\
+        #                  [m/d2e, -l/d2e, -d1e/d2e, 0, 0, 1]])
+
+        k = numpy.array([[K_n, 0, -K_n*d11],\
+                          [0, K_s, K_s*d1e],\
+                          [-K_n*d11, K_s*d1e, K_n*(d11)**2+K_s*(d1e)**2]])
+
+        K = numpy.dot(L.T,numpy.dot(k,L))
+
+        return K
+
+
+        
+    
+
 print "aem classes imported"
